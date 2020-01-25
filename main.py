@@ -52,7 +52,7 @@ def fetch_recipients(path):
                                                 sender.append(b)    # Add sender to the 'sender' variable.
                                                 break               # Break from the loop once sender is added.
                                             except ValueError as e:
-                                                print("Error in file formatting.\nFile: {}\n Line: {}".format(path2, line))
+                                                print("Error in file formatting.\nFile: {}\nLine: {}".format(path2, line))
                                                 print(e)
                                 # Getting the recipients from emails. 
                                 for line in data:
@@ -94,6 +94,20 @@ def fetch_recipients(path):
     return dataset, sender  # Return the dataset and sender
 
 
+def recipients_to_csv(sender,data):
+    try:
+        # Write to the initialized file all the fetched data.
+        with open('aktia-dev-challenge-enron/emails_sent_totals.csv', 'a', newline='') as file:
+            writer = csv.writer(file)   # Initialize the writer.
+            # Iterating through the data and writing it in the csv file.
+            for rec in data:
+                writer.writerow([sender[0], rec, data[rec]])
+    except IOError as e:
+        print("Error in writing file")
+        print(e)
+    return
+
+
 def main():
     # Check if '/maildir' path exists.
     path = os.path.dirname(os.path.realpath(__file__)) + "/maildir"
@@ -103,20 +117,26 @@ def main():
         # Initialize csv file.
         try:
             # Generate a csv file and initialize it with the first row.
-            with open('emails_sent_totals.csv', 'w', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(["Sender", "Recipient", "Count"])
+            with open('aktia-dev-challenge-enron/emails_sent_totals.csv', 'w', newline='') as file:
+                writer = csv.writer(file)                           # Initialize the writer.
+                writer.writerow(["Sender", "Recipient", "Count"])   # Writing the first row.
         except IOError as e:
             print("Error in writing file.")
             print(e)
 
         # Finging different user paths.
         paths = find_paths(path)
-        # Fetching recipient data
-        dataset, sender = fetch_recipients(paths[0])
-        print(dataset) #test prints
-        print(sender)
+        
+        # Iterating through the files with a progress bar.
+        for i in tqdm(paths):
+            # Fetching recipient data.
+            dataset, sender = fetch_recipients(i)
+            # Write the data to the csv file. 
+            recipients_to_csv(sender,dataset)
 
+        print("Done with emails_sent_totals.csv file!")
+
+        
         sys.exit()
 
     else:   # Path not found - exiting program.
