@@ -97,7 +97,7 @@ def fetch_recipients(path):
 def recipients_to_csv(sender,data):
     try:
         # Write to the initialized file all the fetched data.
-        with open('aktia-dev-challenge-enron/emails_sent_totals.csv', 'a', newline='') as file:
+        with open('aktia-dev-challenge-enron/emails_sent_total.csv', 'a', newline='') as file:
             writer = csv.writer(file)   # Initialize the writer.
             # Iterating through the data and writing it in the csv file.
             for rec in data:
@@ -117,7 +117,7 @@ def main():
         # Initialize csv file.
         try:
             # Generate a csv file and initialize it with the first row.
-            with open('aktia-dev-challenge-enron/emails_sent_totals.csv', 'w', newline='') as file:
+            with open('aktia-dev-challenge-enron/emails_sent_total.csv', 'w', newline='') as file:
                 writer = csv.writer(file)                           # Initialize the writer.
                 writer.writerow(["Sender", "Recipient", "Count"])   # Writing the first row.
         except IOError as e:
@@ -134,9 +134,9 @@ def main():
             # Write the data to the csv file. 
             recipients_to_csv(sender,dataset)
 
-        print("Done with emails_sent_totals.csv file!")
+        print("Done with emails_sent_total.csv file!")
 
-        
+
         sys.exit()
 
     else:   # Path not found - exiting program.

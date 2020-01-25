@@ -1,10 +1,18 @@
 # aktia-dev-challenge-enron
+
 Aktia summerjob 2020 data task
 
 Running the program:
 
 - Step 1
-    - Install Pipfile packages by writing ```pipenv --install```
+
+  - Install pipenv with homebrew:
+  ```$ brew install pipenv```
+
+  - Install all dependencies for a project (including dev):
+  ```$ pipenv install --dev```
 
 - Step 2
-    - 
+
+  - Run the 'main.py' program. It produces two csv files. File 'emails_sent_totals.csv' contains data of all send emails per employee to all his or her recipients and file 'emails_sent_average_per_weekday.csv' contains data of average number of recieved emails per employee per day of week.
+  
