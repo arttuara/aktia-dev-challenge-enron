@@ -3,6 +3,7 @@ import sys
 import os
 import csv
 
+
 # Function for finding all paths for different users.
 def find_paths(path):
     paths = []  # Saving all paths here.
@@ -21,6 +22,7 @@ def find_paths(path):
     return paths    # Return list of paths
 
 
+# Function for fetching recipients from emails.
 def fetch_recipients(path):
     sender = []     # Saving sender here.
     dataset = {}    # Saving recipients here with the number of mails. Key:Value = 'recipient':'count'.
@@ -94,11 +96,13 @@ def fetch_recipients(path):
     return dataset, sender  # Return the dataset and sender
 
 
+# Funtion for writing recipients to a .csv file.
 def recipients_to_csv(sender,data):
     try:
         # Write to the initialized file all the fetched data.
-        with open('aktia-dev-challenge-enron/emails_sent_total.csv', 'a', newline='') as file:
+        with open(os.path.dirname(os.path.realpath(__file__)) + '/emails_sent_total.csv', 'a', newline='') as file:
             writer = csv.writer(file)   # Initialize the writer.
+
             # Iterating through the data and writing it in the csv file.
             for rec in data:
                 writer.writerow([sender[0], rec, data[rec]])
@@ -108,40 +112,99 @@ def recipients_to_csv(sender,data):
     return
 
 
+# Function for fetching emails from inbox.
+def fetch_inbox(path):
+    employee = ['arnold-j']   # Saving employee here.
+    dataset = {0:5,1:3}    # Saving emails per day here. Key:Value = 'day':'count'.
+
+
+    return dataset, employee
+
+
+# Funtion for writing inbox to a .csv file.
+def inbox_to_csv(employee, data):
+    try:
+        # Write to the initialized file all the fetched data.
+        with open(os.path.dirname(os.path.realpath(__file__)) + '/emails_sent_average_per_weekday.csv', 'a', newline='') as file:
+            writer = csv.writer(file)   # Initialize the writer.
+
+            # Iterating through the data and writing it in the csv file.
+            for rec in data:
+                writer.writerow([employee[0], rec, data[rec]])
+    except IOError as e:
+        print("Error in writing file")
+        print(e)
+    return
+
+
+# Subfunction for managing the recipients.
+def emails_sent_total(path):
+    # Initialize 'emails_sent_total.csv' file.
+    try:
+        # Generate a csv file and initialize it with the first row.
+        with open(os.path.dirname(os.path.realpath(__file__)) + '/emails_sent_total.csv', 'w', newline='') as file:
+            writer = csv.writer(file)                           # Initialize the writer.
+            writer.writerow(["Sender", "Recipient", "Count"])   # Writing the first row.
+    except IOError as e:
+        print("Error in writing file.")
+        print(e)
+
+    # Finging different user paths.
+    paths = find_paths(path)
+    
+    # Iterating through the files with a progress bar.
+    for i in tqdm(paths):
+        # Fetching recipient data.
+        dataset, sender = fetch_recipients(i)
+        # Write the data to the csv file. 
+        recipients_to_csv(sender,dataset)
+
+    print("Done with emails_sent_total.csv file!")
+    return
+
+
+# Subfunction for managing the employees inbox.
+def emails_sent_average_per_weekday(path):
+    # Initialize 'emails_sent_average_per_weekday.csv' file.
+    try:
+        # Generate a csv file and initialize it with the first row.
+        with open(os.path.dirname(os.path.realpath(__file__)) + '/emails_sent_average_per_weekday.csv', 'w', newline='') as file:
+            writer = csv.writer(file)                                   # Initialize the writer.
+            writer.writerow(["Employee", "Day_of_week", "Avg_count"])   # Writing the first row.
+    except IOError as e:
+        print("Error in writing file.")
+        print(e)
+
+    # Finging different user paths.
+    paths = find_paths(path)
+    
+    # Iterating through the files with a progress bar.
+    for i in tqdm(paths):
+        # Fetching recipient data.
+        dataset, employee = fetch_inbox(i)
+        # Write the data to the csv file. 
+        inbox_to_csv(employee,dataset)
+
+    print("Done with emails_sent_average_per_weekday.csv file!")
+    return
+
+
+# Main function for launcing the program.
 def main():
     # Check if '/maildir' path exists.
     path = os.path.dirname(os.path.realpath(__file__)) + "/maildir"
     if os.path.exists(path):    # Path OK.
         print("Path OK.\nStarting data management.")
-
-        # Initialize csv file.
-        try:
-            # Generate a csv file and initialize it with the first row.
-            with open('aktia-dev-challenge-enron/emails_sent_total.csv', 'w', newline='') as file:
-                writer = csv.writer(file)                           # Initialize the writer.
-                writer.writerow(["Sender", "Recipient", "Count"])   # Writing the first row.
-        except IOError as e:
-            print("Error in writing file.")
-            print(e)
-
-        # Finging different user paths.
-        paths = find_paths(path)
-        
-        # Iterating through the files with a progress bar.
-        for i in tqdm(paths):
-            # Fetching recipient data.
-            dataset, sender = fetch_recipients(i)
-            # Write the data to the csv file. 
-            recipients_to_csv(sender,dataset)
-
-        print("Done with emails_sent_total.csv file!")
-
-
+        # Generate 'emails_sent_total.csv'.
+        '''emails_sent_total(path)'''
+        # Generate 'emails_sent_average_per_weekday.csv'.
+        emails_sent_average_per_weekday(path)
         sys.exit()
 
     else:   # Path not found - exiting program.
         print("Path does not exist.\nProgram ends.")
         sys.exit()
+
 
 if __name__ == '__main__':
     main()
