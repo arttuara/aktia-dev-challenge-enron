@@ -128,5 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# maildir
+# maildir and .csv files
 /maildir
+/emails_sent_average_per_weekday.csv
+/emails_sent_total.csv
