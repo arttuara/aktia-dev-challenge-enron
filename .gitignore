@@ -130,5 +130,5 @@ dmypy.json
 
 # maildir and .csv files
 /maildir
-/emails_sent_average_per_weekday.csv
-/emails_sent_total.csv
+**/emails_sent_average_per_weekday.csv
+**/emails_sent_total.csv

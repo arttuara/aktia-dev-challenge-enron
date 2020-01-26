@@ -1,4 +1,5 @@
 from tqdm import tqdm
+import multiprocessing
 import sys
 import os
 import csv
@@ -268,15 +269,37 @@ def main():
     # Check if '/maildir' path exists in the root.
     path = os.path.dirname(os.path.realpath(__file__)) + "/maildir"
     if os.path.exists(path):    # Path OK.
-        print("Path OK.\nStarting data management.")
-        # Generate 'emails_sent_total.csv'.
-        '''emails_sent_total(path)'''
-        # Generate 'emails_sent_average_per_weekday.csv'.
-        emails_sent_average_per_weekday(path)
+        # Count the number of processors and ask user to run in parrallel.
+        print("Path OK.\nYour computer has {} processors.".format(multiprocessing.cpu_count()))
+        ans = input("Do you want to run in parrallel (estimate 8 minutes with 4 processors)\nor separate (estimate 12 minutes with 4 processors)?\nType: P for parrallel and S for separate\n").rstrip()
+        while ans.lower() != 'p' and ans.lower() != 's':
+            ans = input("Not a proper answer!\nType: P for parrallel and S for separate\n").rstrip()
+
+        if ans.lower() == "p":
+            print("Running in parrallel.\nStarting to process data.")
+            # Creating parrallel processes for running both functions at the same time.
+            pool = multiprocessing.Pool()
+            # Generate 'emails_sent_total.csv'.
+            res1 = pool.apply_async(emails_sent_total, [path])
+            # Generate 'emails_sent_average_per_weekday.csv'.
+            res2 = pool.apply_async(emails_sent_average_per_weekday, [path])
+            res1.get(timeout=3600)  # Having a one hour timeout before timeout error.
+            res2.get(timeout=3600)  # Having a one hour timeout before timeout error.
+            pool.close()
+
+        elif ans.lower() == "s":
+            print("Running separate.\nStarting to process data.")
+            # Running both tasks separate
+            # Generate 'emails_sent_total.csv'.
+            emails_sent_total(path)
+            # Generate 'emails_sent_average_per_weekday.csv'.
+            emails_sent_average_per_weekday(path)
+
+        print("Done with data managment.\nProgram ends.")
         sys.exit()
 
     else:   # Path not found - exiting program.
-        print("Path does not exist.\nProgram ends.")
+        print("Path to 'maildir' does not exist. Move it to the root folder.\nProgram ends.")
         sys.exit()
 
 
