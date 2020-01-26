@@ -27,6 +27,7 @@ def find_paths(path):
 def fetch_recipients(path):
     sender = []     # Saving sender here.
     dataset = {}    # Saving recipients here with the number of mails. Key:Value = 'recipient':'count'.
+    paths = []      # Saving all relevant paths here.
 
     try:
         # Listing subfolders in 'maildir' folder.
@@ -34,62 +35,67 @@ def fetch_recipients(path):
             # Search folders 'sent' or 'sent_items' and pass them forward.
             if subfolders == "sent" or subfolders == "sent_items":
                 path1 = path + "/" + subfolders
-                try:
-                    # Go through files in the folders and filter data.
-                    for files in os.listdir(path1):
-                        path2 = path1 + "/" + files
+                # Finding all the relevant paths from folders and subfolders.
+                for root, dirs, files in os.walk(path1):
+                    for name in files:
+                        # Adding the correct file paths to 'paths' variable.
+                        if name.endswith("."):
+                            paths.append(os.path.join(root, name))
+                    for name in dirs:
+                        # Adding the correct file paths to 'paths' variable.
+                        if name.endswith("."):
+                            paths.append(os.path.join(root, name))
+
+                for paths2 in paths:
+                    try:
+                        # Open file and start going through lines.
+                        data = open(paths2,'r')
                         try:
-                            # Open file and start going through lines.
-                            data = open(path2,'r')
-                            try:
-                                # Get the sender from the data. We only need the sender once so we don't need to extract it several times.
-                                if sender == []:
-                                    for line in data:
-                                        line = line.rstrip()    # Clean the line.
-                                        line = line.lower()     # Setting the line to lowecase.
-                                        # If line starts with 'from:' we pick the line and take the senders email.
-                                        if line.startswith("from:"):
-                                            try:
-                                                a,b = line.split()  # Splitting the line to a = 'to:' and b = 'sender'. The variable 'a' is not needed. This also checks typos (whitespace) in emails. 
-                                                b = b.rstrip()      # Clean the email address.
-                                                sender.append(b)    # Add sender to the 'sender' variable.
-                                                break               # Break from the loop once sender is added.
-                                            except ValueError as e:
-                                                print("Error in file formatting.\nFile: {}\nLine: {}".format(path2, line))
-                                                print(e)
-                                # Getting the recipients from emails. 
+                            # Get the sender from the data. We only need the sender once so we don't need to extract it several times.
+                            if sender == []:
                                 for line in data:
                                     line = line.rstrip()    # Clean the line.
-                                    line = line.lower()     # Setting to lowercase.
-                                    # Getting the recipients from 'to:', 'cc:' and 'bcc:' lines.
-                                    if line.startswith("to:") or line.startswith("cc:") or line.startswith("bcc:"):
-                                        l = line.split()    # Splitting the recipients.
-                                        l.pop(0)            # Removing the 'to:', 'cc:' or 'bcc:' from the beginning.
-                                        # Iterating through the recipients list.
-                                        for rec in l:
-                                            try:
-                                                rec = rec.rstrip()  # Clean the address.
-                                                # If the recipient is already in the dataset we add its value by one.
-                                                if rec in dataset:
-                                                    dataset[rec] += 1
-                                                # If the recipient is not in the dataset we set its value to one.
-                                                else:
-                                                    dataset[rec] = 1
-                                            except ValueError as e:
-                                                print("Error in file formatting")
-                                                print(e)
-                                    # When we hit the line that starts with 'x-from' we can stop going through the email.
-                                    if line.startswith("x-from"):
-                                        break
-                            except UnicodeDecodeError as e:
-                                print("Error in file: {}".format(path2))
-                                print(e)
-                        except IOError as e:
-                            print("Could not read file: {}".format(path2))
+                                    line = line.lower()     # Setting the line to lowecase.
+                                    # If line starts with 'from:' we pick the line and take the senders email.
+                                    if line.startswith("from:"):
+                                        try:
+                                            a,b = line.split()  # Splitting the line to a = 'to:' and b = 'sender'. The variable 'a' is not needed. This also checks typos (whitespace) in emails. 
+                                            b = b.rstrip()      # Clean the email address.
+                                            sender.append(b)    # Add sender to the 'sender' variable.
+                                            break               # Break from the loop once sender is added.
+                                        except ValueError as e:
+                                            print("Error in file formatting.\nFile: {}\nLine: {}".format(paths2, line))
+                                            print(e)
+                            # Getting the recipients from emails. 
+                            for line in data:
+                                line = line.rstrip()    # Clean the line.
+                                line = line.lower()     # Setting to lowercase.
+                                # Getting the recipients from 'to:', 'cc:' and 'bcc:' lines.
+                                if line.startswith("to:") or line.startswith("cc:") or line.startswith("bcc:"):
+                                    l = line.split()    # Splitting the recipients.
+                                    l.pop(0)            # Removing the 'to:', 'cc:' or 'bcc:' from the beginning.
+                                    # Iterating through the recipients list.
+                                    for rec in l:
+                                        try:
+                                            rec = rec.rstrip()  # Clean the address.
+                                            # If the recipient is already in the dataset we add its value by one.
+                                            if rec in dataset:
+                                                dataset[rec] += 1
+                                            # If the recipient is not in the dataset we set its value to one.
+                                            else:
+                                                dataset[rec] = 1
+                                        except ValueError as e:
+                                            print("Error in file formatting")
+                                            print(e)
+                                # When we hit the line that starts with 'x-from' we can stop going through the email.
+                                if line.startswith("x-from"):
+                                    break
+                        except UnicodeDecodeError as e:
+                            print("Error in file: {}".format(paths2))
                             print(e)
-                except IOError as e:
-                    print("An error ocurred in path: {}".format(path1))
-                    print(e)
+                    except IOError as e:
+                        print("Could not read file: {}".format(paths2))
+                        print(e)
     except IOError as e:
         print("An error ocurred in path: {}".format(path))
         print(e)
@@ -271,7 +277,7 @@ def main():
     if os.path.exists(path):    # Path OK.
         # Count the number of processors and ask user to run in parrallel.
         print("Path OK.\nYour computer has {} processors.".format(multiprocessing.cpu_count()))
-        ans = input("Do you want to run in parrallel (estimate 8 minutes with 4 processors)\nor separate (estimate 12 minutes with 4 processors)?\nType: P for parrallel and S for separate\n").rstrip()
+        ans = input("Do you want to run in parrallel (estimate 10 minutes with 4 processors)\nor separate (estimate 14 minutes with 4 processors)?\nType: P for parrallel and S for separate\n").rstrip()
         while ans.lower() != 'p' and ans.lower() != 's':
             ans = input("Not a proper answer!\nType: P for parrallel and S for separate\n").rstrip()
 
