@@ -28,7 +28,7 @@ def fetch_recipients(path):
     dataset = {}    # Saving recipients here with the number of mails. Key:Value = 'recipient':'count'.
 
     try:
-        # Listing subfolders in users folder.
+        # Listing subfolders in 'maildir' folder.
         for subfolders in os.listdir(path):
             # Search folders 'sent' or 'sent_items' and pass them forward.
             if subfolders == "sent" or subfolders == "sent_items":
@@ -93,7 +93,7 @@ def fetch_recipients(path):
         print("An error ocurred in path: {}".format(path))
         print(e)
 
-    return dataset, sender  # Return the dataset and sender
+    return dataset, sender  # Return the dataset and the sender.
 
 
 # Funtion for writing recipients to a .csv file.
@@ -114,11 +114,78 @@ def recipients_to_csv(sender,data):
 
 # Function for fetching emails from inbox.
 def fetch_inbox(path):
-    employee = ['arnold-j']   # Saving employee here.
-    dataset = {0:5,1:3}    # Saving emails per day here. Key:Value = 'day':'count'.
+    employee = []   # Saving employee here.
+    dataset = {}    # Saving emails per day here. Key:Value = 'day':'count'.
+    pathcopy = path.split('/')      # Taking the shortname of the employee.
+    employee.append(pathcopy[-1])   # Saving the shortname of the employee to variable employee.
+    
+    try:
+        # Listing subfolders in 'maildir' folder.
+        for subfolders in os.listdir(path):
+            # Search folder 'inbox' and pass it forward.
+            if subfolders == "inbox":
+                path1 = path + "/" + subfolders
+                try:
+                    # Go through files in the folders and filter data.
+                    for files in os.listdir(path1):
+                        path2 = path1 + "/" + files
+                        try:
+                            # Open file and start going through lines.
+                            data = open(path2,'r')
+                            try:
+                                # Getting the data from emails. 
+                                for line in data:
+                                    line = line.rstrip()    # Clean the line.
+                                    line = line.lower()     # Setting to lowercase.
+                                    # Getting the date from 'date' line.
+                                    if line.startswith("date:"):
+                                        l = line.split()    # Splitting the data.
+                                        day = l.pop(1)      # Taking the day of the week from date.
+                                        daynum = -1         # Initialize day number.
+                                        # Compare the day variable to match any of the dates.
+                                        if day.startswith("mon"):
+                                            daynum = 0
+                                        elif day.startswith("tue"):
+                                            daynum = 1
+                                        elif day.startswith("wed"):
+                                            daynum = 2
+                                        elif day.startswith("thu"):
+                                            daynum = 3
+                                        elif day.startswith("fri"):
+                                            daynum = 4
+                                        elif day.startswith("sat"):
+                                            daynum = 5
+                                        elif day.startswith("sun"):
+                                            daynum = 6
+                                        # If daynum is still -1 raise an error.
+                                        if daynum == -1:
+                                            raise ValueError("Error in date formatting. File: {}".format(path2))
+                                        # Adding the day to the dataset. If the day is already is in the dataset add its value by one.
+                                        # Else set the days value to one.
+                                        if daynum in dataset:
+                                            dataset[daynum] += 1
+                                        else:
+                                            dataset[daynum] = 1
+                                        # When day added to dataset we break and take the next file.
+                                        break
+                                    # If we do not encounter line that starts with 'date:' before a line that starts with 'x-from:' 
+                                    # we can assume that the 'date:' line is missing.
+                                    if line.startswith("x-from"):
+                                        raise ValueError("Date missing from file: {}".format(path2))
+                            except UnicodeDecodeError as e:
+                                print("Error in file: {}".format(path2))
+                                print(e)
+                        except IOError as e:
+                            print("Could not read file: {}".format(path2))
+                            print(e)
+                except IOError as e:
+                    print("An error ocurred in path: {}".format(path1))
+                    print(e)
+    except IOError as e:
+        print("An error ocurred in path: {}".format(path))
+        print(e)
 
-
-    return dataset, employee
+    return dataset, employee    # Return the dataset and the employee.
 
 
 # Funtion for writing inbox to a .csv file.
