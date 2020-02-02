@@ -132,3 +132,4 @@ dmypy.json
 /maildir
 **/emails_sent_average_per_weekday.csv
 **/emails_sent_total.csv
+**/.vscode
